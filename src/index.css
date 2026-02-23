@@ -1,0 +1,259 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import "tailwindcss";
+
+/* ========================================
+   Portfolio – Global Styles & Design Tokens
+   ======================================== */
+
+/* ---------- CSS Custom Properties ---------- */
+:root {
+  --bg-primary: #0a0a1a;
+  --bg-secondary: #111128;
+  --bg-card: rgba(17, 17, 40, 0.6);
+  --text-primary: #e8e8f0;
+  --text-secondary: #9999b8;
+  --accent-blue: #00d4ff;
+  --accent-purple: #7b2ff7;
+  --accent-gradient: linear-gradient(135deg, #00d4ff, #7b2ff7);
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* ---------- Base Reset ---------- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-size: 16px;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.6;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ---------- Custom Scrollbar ---------- */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--accent-blue), var(--accent-purple));
+  border-radius: 4px;
+}
+
+/* ---------- Selection ---------- */
+::selection {
+  background: rgba(123, 47, 247, 0.35);
+  color: #fff;
+}
+
+/* ---------- Section defaults ---------- */
+section {
+  position: relative;
+  padding: 140px 0;
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  section {
+    padding: 100px 0;
+  }
+}
+
+/* ---------- Glass Card utility ---------- */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+}
+
+/* ---------- Gradient text utility ---------- */
+.gradient-text {
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ---------- Accent glow utility ---------- */
+.accent-glow {
+  box-shadow:
+    0 0 20px rgba(0, 212, 255, 0.15),
+    0 0 60px rgba(123, 47, 247, 0.1);
+}
+
+/* ---------- Link resets ---------- */
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ---------- Container ---------- */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 48px;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 0 24px;
+  }
+}
+
+/* ---------- Blob background helper ---------- */
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+/* ---------- Particle Canvas ---------- */
+.particle-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ---------- Animated Grid Background ---------- */
+.grid-bg {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.grid-bg::before {
+  content: '';
+  position: absolute;
+  inset: -50%;
+  background-image:
+    linear-gradient(rgba(0, 212, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 212, 255, 0.04) 1px, transparent 1px);
+  background-size: 60px 60px;
+  animation: gridMove 20s linear infinite;
+}
+
+@keyframes gridMove {
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+
+  100% {
+    transform: translate(60px, 60px) rotate(0deg);
+  }
+}
+
+/* ---------- Floating orb ---------- */
+.floating-orb {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  will-change: transform;
+}
+
+/* ---------- Morphing shape keyframes ---------- */
+@keyframes morph {
+
+  0%,
+  100% {
+    border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+  }
+
+  25% {
+    border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%;
+  }
+
+  50% {
+    border-radius: 50% 60% 30% 60% / 40% 70% 50% 60%;
+  }
+
+  75% {
+    border-radius: 40% 60% 70% 30% / 60% 40% 60% 50%;
+  }
+}
+
+.morph-shape {
+  animation: morph 8s ease-in-out infinite;
+  will-change: border-radius;
+}
+
+/* ---------- Scan line overlay ---------- */
+@keyframes scanline {
+  0% {
+    transform: translateY(-100%);
+  }
+
+  100% {
+    transform: translateY(100%);
+  }
+}
+
+.scanline-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom,
+      transparent 0%,
+      rgba(0, 212, 255, 0.03) 50%,
+      transparent 100%);
+  pointer-events: none;
+  animation: scanline 6s linear infinite;
+  z-index: 2;
+}
+
+/* ---------- Glow pulse ring ---------- */
+@keyframes pulseRing {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.6;
+  }
+
+  50% {
+    transform: scale(1.2);
+    opacity: 0;
+  }
+
+  100% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+}
+
+/* ---------- Noise texture overlay ---------- */
+.noise-overlay::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.015;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+}
