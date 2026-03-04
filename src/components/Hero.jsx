@@ -1,310 +1,241 @@
 /**
- * Hero.jsx – Full-screen hero section with motion graphics
- * - Canvas particle network animation
- * - Animated grid background
- * - Morphing gradient blobs
- * - Scanline overlay
- * - Staggered text reveal + typing cursor
+ * Hero.jsx – Animated stagger grid hero
+ *
+ * Signature anime.js-style dot grid with ripple wave animations.
+ * Clean professional text with staggered entrance timeline.
  */
-import { useEffect, useRef, useCallback } from 'react'
+import { useEffect, useRef } from 'react'
 import anime from 'animejs'
 
-/* ---------- Particle Network (Canvas) ---------- */
-function useParticleCanvas(canvasRef) {
-    const animFrameRef = useRef(null)
-
-    useEffect(() => {
-        const canvas = canvasRef.current
-        if (!canvas) return
-        const ctx = canvas.getContext('2d')
-        let width = (canvas.width = canvas.offsetWidth)
-        let height = (canvas.height = canvas.offsetHeight)
-        const dpr = window.devicePixelRatio || 1
-        canvas.width = width * dpr
-        canvas.height = height * dpr
-        ctx.scale(dpr, dpr)
-
-        const PARTICLE_COUNT = 70
-        const CONNECTION_DIST = 140
-        const particles = []
-
-        class Particle {
-            constructor() {
-                this.x = Math.random() * width
-                this.y = Math.random() * height
-                this.vx = (Math.random() - 0.5) * 0.4
-                this.vy = (Math.random() - 0.5) * 0.4
-                this.radius = Math.random() * 1.5 + 0.5
-                this.opacity = Math.random() * 0.5 + 0.2
-            }
-            update() {
-                this.x += this.vx
-                this.y += this.vy
-                if (this.x < 0 || this.x > width) this.vx *= -1
-                if (this.y < 0 || this.y > height) this.vy *= -1
-            }
-            draw() {
-                ctx.beginPath()
-                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2)
-                ctx.fillStyle = `rgba(0, 212, 255, ${this.opacity})`
-                ctx.fill()
-            }
-        }
-
-        for (let i = 0; i < PARTICLE_COUNT; i++) particles.push(new Particle())
-
-        function drawLines() {
-            for (let i = 0; i < particles.length; i++) {
-                for (let j = i + 1; j < particles.length; j++) {
-                    const dx = particles[i].x - particles[j].x
-                    const dy = particles[i].y - particles[j].y
-                    const dist = Math.sqrt(dx * dx + dy * dy)
-                    if (dist < CONNECTION_DIST) {
-                        const alpha = (1 - dist / CONNECTION_DIST) * 0.15
-                        ctx.beginPath()
-                        ctx.moveTo(particles[i].x, particles[i].y)
-                        ctx.lineTo(particles[j].x, particles[j].y)
-                        ctx.strokeStyle = `rgba(0, 212, 255, ${alpha})`
-                        ctx.lineWidth = 0.5
-                        ctx.stroke()
-                    }
-                }
-            }
-        }
-
-        function loop() {
-            ctx.clearRect(0, 0, width, height)
-            particles.forEach((p) => {
-                p.update()
-                p.draw()
-            })
-            drawLines()
-            animFrameRef.current = requestAnimationFrame(loop)
-        }
-
-        loop()
-
-        const handleResize = () => {
-            width = canvas.offsetWidth
-            height = canvas.offsetHeight
-            canvas.width = width * dpr
-            canvas.height = height * dpr
-            ctx.scale(dpr, dpr)
-        }
-        window.addEventListener('resize', handleResize)
-
-        return () => {
-            cancelAnimationFrame(animFrameRef.current)
-            window.removeEventListener('resize', handleResize)
-        }
-    }, [canvasRef])
-}
+const COLS = 15
+const ROWS = 15
+const DOT_SIZE = 4
+const GAP = 30
 
 export default function Hero() {
-    const canvasRef = useRef(null)
-    useParticleCanvas(canvasRef)
+    const gridRef = useRef(null)
+    const animRef = useRef(null)
 
     useEffect(() => {
-        /* Staggered text reveal */
-        anime({
-            targets: '.hero-line',
-            opacity: [0, 1],
-            translateY: [40, 0],
-            delay: anime.stagger(180, { start: 300 }),
-            duration: 900,
-            easing: 'easeOutExpo',
-        })
+        if (!gridRef.current) return
+        const dots = gridRef.current.querySelectorAll('.grid-dot')
+        if (!dots.length) return
 
-        /* Typing cursor blink */
-        anime({
-            targets: '.typing-cursor',
-            opacity: [1, 0],
+        const origins = ['center', [0, 0], [COLS - 1, ROWS - 1], [0, ROWS - 1], [COLS - 1, 0]]
+        let waveIdx = 0
+
+        const playWave = () => {
+            const from = origins[waveIdx % origins.length]
+            waveIdx++
+
+            animRef.current = anime({
+                targets: dots,
+                scale: [
+                    { value: 1.5, duration: 800, easing: 'easeInOutQuad' },
+                    { value: 1, duration: 600, easing: 'easeOutQuad' },
+                ],
+                opacity: [
+                    { value: 0.7, duration: 800, easing: 'easeInOutQuad' },
+                    { value: 0.15, duration: 600, easing: 'easeOutQuad' },
+                ],
+                borderRadius: [
+                    { value: '3px', duration: 800 },
+                    { value: '50%', duration: 600 },
+                ],
+                delay: anime.stagger(50, { grid: [COLS, ROWS], from }),
+                complete: () => {
+                    setTimeout(playWave, 2000)
+                },
+            })
+        }
+
+        // Entrance: dots appear with stagger from center
+        animRef.current = anime({
+            targets: dots,
+            opacity: [0, 0.15],
+            scale: [0, 1],
+            delay: anime.stagger(25, { grid: [COLS, ROWS], from: 'center' }),
             duration: 600,
-            loop: true,
-            direction: 'alternate',
-            easing: 'steps(1)',
+            easing: 'easeOutExpo',
+            complete: () => setTimeout(playWave, 800),
         })
 
-        /* Floating morphing blobs */
-        document.querySelectorAll('.hero-blob').forEach((blob, i) => {
-            anime({
-                targets: blob,
-                translateX: () => anime.random(-100, 100),
-                translateY: () => anime.random(-100, 100),
-                scale: [1, anime.random(10, 14) / 10],
-                duration: () => anime.random(5000, 8000),
-                easing: 'easeInOutSine',
-                direction: 'alternate',
-                loop: true,
-                delay: i * 600,
-            })
-        })
+        // Text entrance timeline
+        const tl = anime.timeline({ easing: 'easeOutExpo' })
 
-        /* Floating orbs – small accent dots */
-        document.querySelectorAll('.hero-orb').forEach((orb, i) => {
-            anime({
-                targets: orb,
-                translateY: [0, anime.random(-30, 30)],
-                translateX: [0, anime.random(-20, 20)],
-                opacity: [0.3, 0.8],
-                duration: anime.random(2500, 4500),
-                easing: 'easeInOutSine',
-                direction: 'alternate',
-                loop: true,
-                delay: i * 300,
-            })
-        })
-
-        /* CTA button pulse */
-        anime({
+        tl.add({
+            targets: '.hero-label',
+            opacity: [0, 1],
+            translateY: [-15, 0],
+            duration: 800,
+        }, 500)
+        .add({
+            targets: '.hero-title-line',
+            opacity: [0, 1],
+            translateY: [50, 0],
+            duration: 1000,
+            delay: anime.stagger(100),
+        }, 700)
+        .add({
+            targets: '.hero-desc',
+            opacity: [0, 1],
+            translateY: [20, 0],
+            duration: 800,
+        }, 1300)
+        .add({
             targets: '.hero-cta',
-            boxShadow: [
-                '0 0 0px rgba(0,212,255,0.3)',
-                '0 0 28px rgba(0,212,255,0.5)',
-            ],
-            duration: 1800,
+            opacity: [0, 1],
+            translateY: [15, 0],
+            duration: 600,
+            delay: anime.stagger(80),
+        }, 1600)
+        .add({
+            targets: '.hero-scroll',
+            opacity: [0, 0.4],
+            translateY: [10, 0],
+            duration: 600,
+        }, 2200)
+
+        // Scroll arrow bounce
+        anime({
+            targets: '.scroll-arrow',
+            translateY: [0, 5],
+            duration: 700,
             direction: 'alternate',
             loop: true,
             easing: 'easeInOutSine',
         })
 
-        /* Pulse rings */
+        // Subtle CTA glow pulse
         anime({
-            targets: '.pulse-ring',
-            scale: [0.8, 1.6],
-            opacity: [0.5, 0],
-            duration: 3000,
-            delay: anime.stagger(800),
+            targets: '.hero-cta-primary',
+            boxShadow: [
+                '0 0 0px rgba(8,145,178,0.0)',
+                '0 0 24px rgba(8,145,178,0.18)',
+            ],
+            duration: 2200,
+            direction: 'alternate',
             loop: true,
-            easing: 'easeOutExpo',
+            easing: 'easeInOutSine',
         })
+
+        return () => {
+            if (animRef.current) animRef.current.pause()
+        }
     }, [])
 
     return (
         <section
-            className="relative min-h-screen flex items-center justify-center overflow-hidden scanline-overlay"
+            className="relative min-h-screen flex items-center justify-center overflow-hidden"
             style={{ padding: 0 }}
         >
-            {/* Animated grid background */}
-            <div className="grid-bg" />
-
-            {/* Particle canvas */}
-            <canvas ref={canvasRef} className="particle-canvas" />
-
-            {/* Morphing blobs */}
-            <div aria-hidden="true">
+            {/* Animated stagger grid */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div
-                    className="hero-blob blob morph-shape"
+                    ref={gridRef}
                     style={{
-                        width: 450,
-                        height: 450,
-                        background: 'radial-gradient(circle, rgba(0,212,255,0.3), transparent 70%)',
-                        top: '5%',
-                        left: '10%',
+                        display: 'grid',
+                        gridTemplateColumns: `repeat(${COLS}, ${DOT_SIZE}px)`,
+                        gap: `${GAP - DOT_SIZE}px`,
                     }}
-                />
-                <div
-                    className="hero-blob blob morph-shape"
-                    style={{
-                        width: 500,
-                        height: 500,
-                        background: 'radial-gradient(circle, rgba(123,47,247,0.25), transparent 70%)',
-                        bottom: '0%',
-                        right: '5%',
-                        animationDelay: '-3s',
-                    }}
-                />
-                <div
-                    className="hero-blob blob morph-shape"
-                    style={{
-                        width: 300,
-                        height: 300,
-                        background: 'radial-gradient(circle, rgba(0,212,255,0.15), transparent 70%)',
-                        top: '55%',
-                        left: '50%',
-                        animationDelay: '-5s',
-                    }}
-                />
+                >
+                    {Array.from({ length: COLS * ROWS }).map((_, i) => (
+                        <div
+                            key={i}
+                            className="grid-dot"
+                            style={{
+                                width: DOT_SIZE,
+                                height: DOT_SIZE,
+                                borderRadius: '50%',
+                                background: 'var(--accent)',
+                                opacity: 0,
+                                willChange: 'transform, opacity',
+                            }}
+                        />
+                    ))}
+                </div>
             </div>
 
-            {/* Floating decorative orbs */}
-            <div aria-hidden="true">
-                {[...Array(8)].map((_, i) => (
-                    <div
-                        key={i}
-                        className="hero-orb floating-orb"
-                        style={{
-                            width: Math.random() * 6 + 3,
-                            height: Math.random() * 6 + 3,
-                            background: i % 2 === 0 ? 'var(--accent-blue)' : 'var(--accent-purple)',
-                            top: `${10 + Math.random() * 80}%`,
-                            left: `${5 + Math.random() * 90}%`,
-                            opacity: 0.3,
-                            boxShadow: `0 0 8px ${i % 2 === 0 ? 'var(--accent-blue)' : 'var(--accent-purple)'}`,
-                        }}
-                    />
-                ))}
-            </div>
-
-            {/* Pulse rings – center decoration */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none" aria-hidden="true">
-                {[...Array(3)].map((_, i) => (
-                    <div
-                        key={i}
-                        className="pulse-ring absolute rounded-full border border-[var(--accent-blue)]"
-                        style={{
-                            width: 200 + i * 120,
-                            height: 200 + i * 120,
-                            opacity: 0,
-                        }}
-                    />
-                ))}
-            </div>
+            {/* Radial vignette overlay */}
+            <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                    background: 'radial-gradient(ellipse at 50% 50%, transparent 12%, var(--bg-primary) 65%)',
+                }}
+            />
 
             {/* Content */}
-            <div className="container relative z-10 flex flex-col items-center text-center">
-                <p className="hero-line opacity-0 text-sm md:text-base font-medium tracking-widest uppercase text-[var(--accent-blue)] mb-4">
-                    AI / ML Engineer &amp; Data Scientist
+            <div
+                className="container relative z-10 flex flex-col items-center text-center"
+                style={{ maxWidth: 800 }}
+            >
+                <p
+                    className="hero-label opacity-0 section-label mb-6"
+                    style={{ color: 'var(--accent)' }}
+                >
+                    AI / ML ENGINEER &amp; DATA SCIENTIST
                 </p>
 
-                <h1 className="hero-line opacity-0 text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold leading-tight mb-2">
+                <h1 className="hero-title-line opacity-0 text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold leading-[1.05] tracking-tight mb-2">
                     <span className="gradient-text">Muhammad Aldo</span>
                 </h1>
-
-                <h1 className="hero-line opacity-0 text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold leading-tight mb-6">
-                    <span className="text-[var(--text-primary)]">Fahrezy</span>
-                    <span className="typing-cursor inline-block w-[4px] h-[0.85em] bg-[var(--accent-blue)] ml-2 align-middle rounded-sm" />
+                <h1 className="hero-title-line opacity-0 text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold leading-[1.05] tracking-tight mb-10">
+                    Fahrezy
                 </h1>
 
-                <p className="hero-line opacity-0 max-w-2xl mx-auto text-[var(--text-secondary)] text-base md:text-lg mb-12 leading-relaxed" style={{ textAlign: 'center' }}>
+                <p className="hero-desc opacity-0 max-w-xl mx-auto text-[var(--text-secondary)] text-base md:text-lg leading-relaxed mb-12">
                     Turning complex data into actionable intelligence through machine
                     learning, deep learning, and data-driven storytelling.
                 </p>
 
-                <div className="hero-line opacity-0 flex flex-wrap gap-6 justify-center">
+                <div className="flex flex-wrap gap-4 justify-center">
                     <a
                         href="#projects"
-                        className="hero-cta inline-flex items-center gap-3 rounded-full font-semibold text-sm text-[var(--bg-primary)]"
-                        style={{ background: 'var(--accent-gradient)', padding: '16px 48px', whiteSpace: 'nowrap' }}
+                        className="hero-cta hero-cta-primary opacity-0 group inline-flex items-center gap-2.5 px-8 py-3.5 rounded-full font-semibold text-sm transition-all duration-300"
+                        style={{ background: 'var(--accent-gradient)', color: '#fff' }}
                     >
                         View Projects
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                        <svg
+                            className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2.5}
+                        >
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
                         </svg>
                     </a>
                     <a
                         href="#contact"
-                        className="inline-flex items-center gap-3 rounded-full font-semibold text-sm border border-[var(--glass-border)] text-[var(--text-primary)] hover:border-[var(--accent-blue)] transition-colors duration-300"
-                        style={{ padding: '16px 48px', whiteSpace: 'nowrap' }}
+                        className="hero-cta opacity-0 inline-flex items-center gap-2.5 px-8 py-3.5 rounded-full font-semibold text-sm border border-[var(--glass-border)] text-[var(--text-primary)] hover:border-[var(--accent)] transition-colors duration-300"
                     >
                         Get in Touch
                     </a>
                 </div>
             </div>
 
-            {/* Bottom gradient fade */}
+            {/* Scroll indicator */}
+            <div className="hero-scroll opacity-0 absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
+                <span
+                    className="text-[9px] tracking-[0.25em] text-[var(--text-muted)]"
+                    style={{ fontFamily: 'var(--font-mono)' }}
+                >
+                    SCROLL
+                </span>
+                <svg
+                    className="scroll-arrow w-3.5 h-3.5 text-[var(--text-muted)]"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 14l-7 7m0 0l-7-7" />
+                </svg>
+            </div>
+
+            {/* Bottom fade */}
             <div
-                className="absolute bottom-0 left-0 w-full h-32 z-10"
+                className="absolute bottom-0 left-0 w-full h-40 pointer-events-none"
                 style={{ background: 'linear-gradient(to top, var(--bg-primary), transparent)' }}
             />
         </section>
