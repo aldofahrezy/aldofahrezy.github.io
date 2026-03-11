@@ -748,11 +748,11 @@ function ContactSection() {
                         className="contact-email text-sm text-[var(--text-secondary)] mb-10"
                         style={{ opacity: 0, fontFamily: 'var(--font-mono)' }}
                     >
-                        muhammadaldofahrezy@gmail.com
+                        aldofahrezy@gmail.com
                     </p>
 
                     <a
-                        href="mailto:muhammadaldofahrezy@gmail.com"
+                        href="mailto:aldofahrezy@gmail.com"
                         className="contact-cta group inline-flex items-center gap-3 rounded-full font-semibold text-sm border transition-all duration-300 hover:bg-[rgba(79,70,229,0.06)]"
                         style={{
                             opacity: 0,
