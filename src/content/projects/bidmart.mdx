@@ -1,0 +1,93 @@
+---
+title: "BidMart — Distributed Auction Marketplace"
+summary: "A production-shaped microservices marketplace whose Rust auction engine settles money correctly even when processes crash mid-transaction — via a transactional outbox, a lease-locked job queue, and a two-phase settlement saga."
+domain: "Distributed Systems"
+families: ["Systems"]
+tags: ["Rust", "axum", "gRPC", "RabbitMQ", "PostgreSQL", "Spring Boot", "React", "Docker", "Prometheus"]
+role: "Led the Rust auction service (6-person team)"
+timeframe: "2026"
+context: "Advanced Programming project · Universitas Indonesia"
+featured: true
+order: 8
+metrics:
+  - { value: "6", label: "Bounded-context services" }
+  - { value: "410+", label: "Rust unit & domain tests" }
+  - { value: "90%", label: "Enforced coverage gate (auction)" }
+  - { value: "205 ms", label: "Bid → wallet-hold (smoke test)" }
+links:
+  - { label: "Auction service (Rust)", href: "https://github.com/advprog-2026-A17-project/bidmart-auction-service-rust" }
+  - { label: "All services (org)", href: "https://github.com/advprog-2026-A17-project" }
+  - { label: "Live frontend", href: "https://bidmart-frontend.vercel.app" }
+---
+
+## The problem
+
+An auction marketplace looks simple until two people bid on the same item in the same 50 milliseconds, or a server dies in the instant between "you won" and "your money moved." Those two moments — **concurrent bidding** and **crash-safe settlement** — are where auction systems actually earn their keep.
+
+BidMart was a six-person Advanced Programming project, but I treated my slice of it as if it had to survive real traffic. I owned the **auction service** (and its wallet interactions), and I chose to write it in **Rust** specifically because the bidding hot path is concurrency-sensitive: I wanted the compiler to make data races unrepresentable rather than hope tests caught them.
+
+## Architecture at a glance
+
+The system is six independently deployable services, each owning its own database — a genuine database-per-service topology, not a shared schema with a namespace prefix.
+
+| Service | Stack | Owns | Store |
+|---|---|---|---|
+| Gateway | Spring Cloud Gateway | JWT auth, routing, rate-limit, RBAC | — |
+| Auth | Java · Spring Boot | Accounts, JWT access/refresh, 2FA, Google OAuth | Postgres + Redis |
+| Catalogue | Java · Spring Boot | Listings, categories, search | Postgres (+ gRPC) |
+| **Auction** | **Rust · axum** | **Sessions, bids, proxy bids, closure, holds** | **Postgres** |
+| Wallet | Rust · axum + tonic | Balances, holds, escrow, Midtrans top-ups | Postgres (+ gRPC) |
+| Order & Notify | Java · Spring Boot | Post-auction orders, disputes, notifications | Postgres |
+
+Services talk three ways, each chosen for a reason: **REST** through the gateway for client traffic; **gRPC** for the two low-latency internal calls that sit on the bidding path (auction → catalogue to validate a listing, auction → wallet to place a hold); and **RabbitMQ topic events** for everything asynchronous (auction lifecycle → catalogue projections + order creation). The wallet gRPC contract (`HoldFunds`, `ReleaseHold`, `ConvertHoldToPayment`) and the RabbitMQ event envelopes are the seams the whole system hangs on, so I treated them as contracts and tested them from both producer and consumer ends.
+
+## The auction engine — the part that's hard
+
+### Concurrency: defense in depth, not hope
+
+A bid mutates shared state under contention, so I layered three independent guards and was deliberate about which one is the *source of truth*:
+
+1. **A per-auction async mutex** serialises bids on the *same* listing while letting different auctions run fully in parallel — a throughput optimisation.
+2. **A SQL compare-and-set** is the actual correctness boundary. The winning-bid write only lands if it still beats the stored high bid:
+
+```sql
+UPDATE listings
+SET current_highest_bid_cents = $1
+WHERE id = $5
+  AND (current_highest_bid_cents IS NULL
+       OR current_highest_bid_cents < $6);
+```
+
+3. **Row locks** (`SELECT … FOR UPDATE SKIP LOCKED`) guard the closure path so multiple workers never process the same auction twice.
+
+The design doc says it plainly: *the in-process mutex is only a single-instance optimisation; the database transaction is the correctness authority.* Writing that down — and meaning it — is what makes the system safe to run on more than one replica.
+
+### Proxy bidding and anti-sniping
+
+Bidders can set a maximum and let the system bid for them (eBay-style). After every bid, a resolver finds the top proxy, computes the runner-up's cap, and raises the recorded bid to just **one increment above the competition** — never revealing or overspending the maximum. And to kill last-second sniping, a bid inside the final 120 seconds pushes the end time out by another 120 seconds, incrementing an `extensions` counter with no hard cap.
+
+### Correctness under failure: outbox + settlement saga
+
+This is the piece I'm proudest of. Ending an auction has to do two things that can't be in one transaction — change the database *and* move money in the wallet service — so I built for the crash that happens *between* them.
+
+- **Transactional outbox.** The `AuctionEnded` event is written into an `outbox_events` table **inside the same transaction** as the status change, so the event can never be lost or double-emitted. A separate poller claims events on a 60-second lease and publishes to RabbitMQ with publisher-confirms and exponential backoff.
+- **Two-phase closure saga.** Closing runs a lease-locked job through `PENDING → PROCESSING → SETTLING → DONE`. The atomic DB commit (mark WON/UNSOLD + write the outbox event) is deliberately split from the non-transactional wallet settlement. If the process dies mid-settlement, the job is left in `SETTLING` and re-runs **only** the idempotent money step — giving exactly-once *effects* on top of at-least-once delivery.
+- **Self-healing.** A reconciliation pass inserts closure jobs for any auction that ended without one, so a missed tick fixes itself rather than stranding an auction forever.
+
+Each accepted bid also releases the previous winner's wallet hold and places a new one; if the bid insert then fails, the just-placed hold is released — a compensating action so money is never frozen by a half-finished bid.
+
+## Engineering & operations
+
+I wanted the ops story to be as real as the code:
+
+- **Tests across four levels** — 300+ auction domain tests plus a deliberate concurrency-interleaving test (a slow-wallet stub forces bids to race), contract/event-regression tests on every seam, and an end-to-end functional-smoke script that drives a full auction through the gateway.
+- **CI/CD with a spine.** Each service gates on `cargo llvm-cov` / JaCoCo (the auction service enforces **90% line coverage**), then a green build fans out a `repository_dispatch` to an infrastructure repo that deploys with **rollback image snapshots, health-gated promotion, and automatic rollback** on failure — plus a check that gRPC ports never get exposed publicly.
+- **Observability.** The Rust services expose a hand-rolled Prometheus endpoint (lock-free atomic counters, an APDEX score, a latency histogram); Grafana dashboards and Grafana-Cloud alert rules encode the SLOs — availability, **p95 < 2 s**, 5xx error rate < 5%.
+
+## Honest limitations
+
+A truthful write-up names its edges. Most of the hard *performance numbers* live in dashboard screenshots rather than committed benchmarks, so I only quote what's reproducible: the functional-smoke latencies (a wallet-backed bid round-trips in ~205 ms) and the coverage gates. The public VPS edge wasn't conclusively proven serving at submission time (an SSH-blocked deploy log), and a couple of services lean on `ddl-auto=update` rather than migrations. If I took this further, my first move would be a committed load-test report (p50/p95/p99 under sustained concurrent bidding) so the concurrency claims stand on numbers, not just design.
+
+## Reflection
+
+The lesson that transferred to everything I've built since: **distributed correctness is a property of your failure paths, not your happy path.** The outbox and the two-phase saga are only ever exercised when something breaks — and designing for that, in a language that refuses to let me hand-wave concurrency, is the part of this project I'd defend line-by-line in an interview.

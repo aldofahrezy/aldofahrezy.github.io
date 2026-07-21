@@ -1,0 +1,43 @@
+---
+interface Props {
+  stats: { value: string; label: string }[];
+  label?: string;
+}
+const { stats, label = 'Selected results' } = Astro.props;
+const cols = Math.min(stats.length, 4);
+---
+{stats.length > 0 && (
+  <dl class="readout" style={`--cols:${cols}`} aria-label={label}>
+    {stats.map((s) => (
+      <div class="readout-item">
+        <dd class="readout-value metric-num">{s.value}</dd>
+        <dt class="readout-label">{s.label}</dt>
+      </div>
+    ))}
+  </dl>
+)}
+
+<style>
+  .readout {
+    display: grid;
+    grid-template-columns: repeat(var(--cols, 4), 1fr);
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 0;
+  }
+  .readout-item {
+    background: var(--surface);
+    padding: 1.15rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .readout-value { font-size: clamp(1.3rem, 3vw, 1.8rem); color: var(--ink); line-height: 1; }
+  .readout-label { font-size: 0.72rem; color: var(--ink-3); line-height: 1.35; }
+  @media (max-width: 640px) {
+    .readout { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>

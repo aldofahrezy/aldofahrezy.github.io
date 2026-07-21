@@ -1,0 +1,44 @@
+---
+title: "Speed-Dating Match Prediction — Satria Data BDC 2025"
+summary: "Predicting mutual 'matches' from speed-dating data by engineering pairwise features between two people, then benchmarking four models under honest 5-fold cross-validation — and resisting the in-sample number that looked too good to be true."
+domain: "Tabular ML"
+families: ["ML"]
+tags: ["scikit-learn", "Random Forest", "XGBoost", "CatBoost", "Feature Engineering"]
+role: "Solo · competition"
+timeframe: "2025"
+context: "Satria Data Big Data Challenge 2025 · UI selection"
+featured: false
+order: 5
+metrics:
+  - { value: "0.798", label: "OOF ROC-AUC · Random Forest" }
+  - { value: "4", label: "Models, 5-fold CV" }
+  - { value: "4,183", label: "Test pairs scored" }
+  - { value: "21", label: "Speed-dating waves reconciled" }
+---
+
+## The problem
+
+Given records from a speed-dating experiment — each person's self-ratings, their partner's ratings, demographics, and stated preferences — predict whether a pair produced a mutual **match**. The subtlety is that a "row" is really _two people_, and the signal lives in how they compare, not in either one alone.
+
+## Approach & reasoning
+
+**Feature engineering was the whole game.** For each pair I built comparison features between the two participants — absolute differences (`selisih`), agreement flags (`matching`), and averages across the attractiveness / sincerity / intelligence / fun / ambition / shared-interest dimensions. A data-quality catch mattered too: the rating scales weren't consistent across the experiment's 21 waves, so I **rescaled the affected waves** onto a common range before differencing — otherwise the "differences" would have been comparing incompatible units.
+
+Then I benchmarked four models under **5-fold stratified cross-validation** so the comparison would be fair: Logistic Regression, Random Forest, XGBoost, and CatBoost.
+
+## Results — reported honestly
+
+| Model | OOF ROC-AUC | OOF PR-AUC |
+| --- | --- | --- |
+| **Random Forest** | **0.798** | 0.539 |
+| XGBoost | 0.752 | 0.549 |
+| CatBoost | 0.736 | 0.512 |
+| Logistic Regression | 0.599 | 0.225 |
+
+Random Forest gave the best ranking performance at **ROC-AUC ≈ 0.80** out-of-fold, with XGBoost close behind on precision-recall.
+
+**The honest part matters here.** A later step, refitting the best model on the full training set and scoring it on that _same_ data, produced ~0.98 accuracy. That's an in-sample number — the model grading its own homework — and quoting it would be dishonest. The out-of-fold ~0.80 is the figure that reflects real generalization, so that's the one I stand behind. Recognizing that trap is, to me, more important than the score itself.
+
+## Reflection
+
+Two takeaways I carry forward: **relational problems need relational features** (differences and agreements, not raw attributes), and **the only score worth reporting is the one measured on data the model never saw.**

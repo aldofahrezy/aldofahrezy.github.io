@@ -1,0 +1,109 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ProjectRow from '../../components/ProjectRow.astro';
+import { getCollection } from 'astro:content';
+import { competitions } from '../../data/profile';
+
+const entries = (await getCollection('projects'))
+  .filter((e) => !e.data.draft)
+  .sort((a, b) => a.data.order - b.data.order);
+
+const families = Array.from(new Set(entries.flatMap((e) => e.data.families))).sort();
+---
+<BaseLayout
+  title="Work — Muhammad Aldo Fahrezy"
+  description="Selected data science, machine learning, and engineering projects — each with the reasoning, the results, and honest limitations."
+>
+  <section class="section">
+    <div class="container-page">
+      <p class="eyebrow">Work</p>
+      <h1 class="page-title">Selected projects</h1>
+      <p class="page-lead measure-wide">
+        From competition ML notebooks to production systems — each written up with the reasoning behind it, the measured results, and honest limitations.
+      </p>
+
+      {families.length > 0 && (
+        <div class="filters" role="group" aria-label="Filter projects by area">
+          <button class="filter is-active" data-filter="all" type="button">All</button>
+          {families.map((f) => <button class="filter" data-filter={f} type="button">{f}</button>)}
+        </div>
+      )}
+
+      <div class="project-list">
+        {entries.map((e) => (
+          <div class="pl-item" data-families={e.data.families.join(' ')}>
+            <ProjectRow
+              href={`/projects/${e.id}`}
+              domain={e.data.domain}
+              title={e.data.title}
+              summary={e.data.summary}
+              tags={e.data.tags}
+              metric={e.data.metrics?.[0] ?? null}
+              context={e.data.context}
+              families={e.data.families}
+            />
+          </div>
+        ))}
+      </div>
+
+      {entries.length === 0 && (
+        <p class="empty">Case studies are being written — check back shortly.</p>
+      )}
+
+      <div class="also reveal">
+        <p class="eyebrow">Also competed in</p>
+        <ul class="comp-list">
+          {competitions.map((c) => (
+            <li class="comp">
+              <span class="comp-name">{c.name}</span>
+              <span class="comp-note">{c.note}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
+
+<script>
+  const buttons = document.querySelectorAll<HTMLButtonElement>('.filter');
+  const items = document.querySelectorAll<HTMLElement>('.pl-item');
+  buttons.forEach((b) =>
+    b.addEventListener('click', () => {
+      buttons.forEach((x) => x.classList.remove('is-active'));
+      b.classList.add('is-active');
+      const f = b.dataset.filter;
+      items.forEach((it) => {
+        const fam = (it.getAttribute('data-families') || '').split(' ');
+        it.hidden = !(f === 'all' || fam.includes(f as string));
+      });
+    })
+  );
+</script>
+
+<style>
+  .page-title { font-size: clamp(2rem, 5vw, 3rem); margin-top: 0.6rem; letter-spacing: -0.03em; }
+  .page-lead { color: var(--ink-2); font-size: 1.1rem; line-height: 1.6; margin-top: 1rem; }
+  .filters { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 2rem; }
+  .filter {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    padding: 0.4rem 0.85rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--ink-2);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .filter:hover { border-color: var(--accent); color: var(--accent); }
+  .filter.is-active { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .project-list { margin-top: 2.5rem; border-bottom: 1px solid var(--line); }
+  .empty { color: var(--ink-2); margin-top: 2rem; }
+  .also { margin-top: 4rem; }
+  .comp-list { list-style: none; padding: 0; margin-top: 1.5rem; }
+  .comp { display: grid; grid-template-columns: 16rem 1fr; gap: 1.5rem; padding: 1rem 0; border-top: 1px solid var(--line); align-items: baseline; }
+  .comp-name { font-weight: 500; color: var(--ink); font-size: 0.95rem; }
+  .comp-note { color: var(--ink-2); font-size: 0.9rem; line-height: 1.5; }
+  @media (max-width: 640px) { .comp { grid-template-columns: 1fr; gap: 0.3rem; } }
+</style>

@@ -1,0 +1,38 @@
+---
+title: "TexTell — Multimodal Fashion Tagging & Listing"
+summary: "A mobile app that turns a photo of a garment into structured attributes and a ready-to-post shop listing — backed by two models I trained on Kaggle and exported for inference: a PyTorch vision tagger and a LoRA-fine-tuned text generator."
+domain: "Multimodal ML"
+families: ["ML"]
+tags: ["PyTorch", "LoRA", "Computer Vision", "NLP", "FastAPI", "React Native"]
+role: "Solo · MVP"
+timeframe: "2026"
+context: "Multimodal ML product"
+featured: false
+order: 4
+metrics:
+  - { value: "CV + NLP", label: "Two trained models, one product" }
+  - { value: "LoRA", label: "Parameter-efficient text tuning" }
+  - { value: "~24 MB", label: "Exported vision model" }
+  - { value: "Offline", label: "On-device app store (WatermelonDB)" }
+---
+
+## The problem
+
+Small fashion sellers lose hours doing the same two chores for every item: figuring out what to _call_ it (category, material, style attributes) and writing a listing that will actually sell. TexTell collapses that into one step — photograph the garment, get structured tags and a drafted listing back.
+
+## Two models, one product
+
+TexTell is genuinely **multimodal**, and each half is a real trained model rather than an API call:
+
+- a **computer-vision tagger** (PyTorch, ~24 MB exported) that reads the image and predicts garment attributes;
+- an **NLP model fine-tuned with LoRA** (a compact adapter, ~9 MB) that turns those attributes into listing text.
+
+LoRA was a deliberate choice: parameter-efficient fine-tuning gets a domain-adapted generator without the cost or footprint of tuning a full model — which matters when the artifact has to ship inside a phone app.
+
+## Architecture, honestly
+
+I trained both models **on Kaggle** and exported the weights; the repository is the **productionization** side — a **FastAPI** inference service that loads the exported `.pt` and LoRA adapter, and a **React Native / Expo** app with **WatermelonDB** for offline-first local storage. So the code you can read is the serving and app layer; the training notebooks live on Kaggle. I'd rather scope that precisely than imply the whole stack sits in one repo.
+
+## Reflection
+
+TexTell is my clearest example of taking ML the last mile — not stopping at a notebook metric, but exporting the model, wrapping it in an inference service, and putting it behind a real mobile UX. The gap between "it works in the notebook" and "it works in someone's hand" is where most of the engineering actually is.
