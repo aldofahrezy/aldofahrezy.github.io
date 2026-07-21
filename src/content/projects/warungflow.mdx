@@ -1,0 +1,41 @@
+---
+title: "WarungFlow — Autonomous Finance Ops for Micro-Businesses"
+summary: "An LLM-agent system that reads a warung's WhatsApp-style orders, reconciles them against QRIS and bank transfers with fuzzy name-matching, and reports cashflow and a business-health score — winner of Best Payment Use Case at OpenClaw Agenthon Indonesia 2026."
+domain: "Agentic AI"
+families: ["Applied AI"]
+tags: ["Python", "LLM Agents", "Tool Use", "DOKU", "QRIS", "Fintech"]
+role: "Solo · hackathon"
+timeframe: "2026"
+context: "OpenClaw Agenthon Indonesia 2026 · 🏆 Best Payment Use Case"
+featured: true
+order: 2
+metrics:
+  - { value: "🏆", label: "Best Payment Use Case · OpenClaw 2026" }
+  - { value: "20", label: "Tools in the agent registry" }
+  - { value: "≤24", label: "Steps per orchestration loop" }
+  - { value: "0–100", label: "Business-health score" }
+links:
+  - { label: "Repository + pitch deck", href: "https://github.com/aldofahrezy/OpenClaw2026_MuhammadAldoFahrezy_WarungFlow" }
+---
+
+## The problem
+
+Millions of Indonesian _warung_ (micro-businesses) run entirely on WhatsApp orders and a mix of QRIS and bank transfers — and their bookkeeping is a mental note or a paper ledger. The hard, unglamorous part isn't taking the order; it's **reconciling** it: matching "Bu Sri ordered 3 × Rp15.000" against a bank line that reads `TRANSFER SRI WAHYUNI 45000` and knowing the day balanced.
+
+WarungFlow is an autonomous agent that does exactly that loop — read, reconcile, report — so the owner doesn't have to.
+
+## Agentic architecture
+
+Rather than one giant prompt, WarungFlow is built as a **tool-using agent**: an orchestrator runs a bounded reasoning loop (capped at 24 steps to keep it terminating and debuggable) over a registry of **~20 tools** — parse an order message, look up a customer, query payments, post a reconciliation, compute a metric, draft a reminder. The LLM decides _which_ tool to call next; the tools do the deterministic work. That split — probabilistic planning over deterministic actions — is what keeps an agent both flexible and trustworthy with money.
+
+## Payment reconciliation
+
+The core capability is matching orders to incoming money across **QRIS and bank transfers**, integrated through the **DOKU** payment gateway (sandbox). Because Indonesian transfer descriptions are noisy and names rarely match exactly, reconciliation leans on **fuzzy name-matching** to link a payment to the right order and customer — the piece the judges recognized with _Best Payment Use Case_.
+
+## Financial intelligence
+
+On top of reconciliation, the agent computes cashflow and a **0–100 business-health score**, and generates plain-language reminders (chase an unpaid order, flag a slow week) — turning raw message-and-transfer noise into something an owner can act on in seconds.
+
+## Reflection
+
+WarungFlow is where I learned to build with agents _responsibly_: bound the loop, put the money-touching logic in deterministic tools, and let the model plan rather than execute. The award was nice; the more durable lesson was how to make an LLM system you'd actually trust near someone's cash.

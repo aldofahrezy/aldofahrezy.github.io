@@ -1,0 +1,46 @@
+---
+title: "BanjirWarga — Community Flood Intelligence"
+summary: "A flood-intelligence platform for Indonesian cities: a medallion data pipeline feeding an explainable 0–100 risk score, a report trust score, and a Dijkstra-based safe-route engine over a risk-weighted road graph — served through a PostGIS backend and an offline-capable map PWA."
+domain: "Geospatial ML"
+families: ["ML", "Full-Stack"]
+tags: ["FastAPI", "PostGIS", "PostgreSQL", "React", "TypeScript", "Leaflet"]
+role: "GEMASTIK team project"
+timeframe: "2026"
+context: "GEMASTIK PPL 2026"
+featured: true
+order: 3
+metrics:
+  - { value: "0–100", label: "Explainable flood-risk score" }
+  - { value: "3-tier", label: "raw → silver → gold pipeline" }
+  - { value: "Dijkstra", label: "Risk-weighted safe routing" }
+  - { value: "PWA", label: "Offline-capable map client" }
+---
+
+## The problem
+
+When a neighborhood floods, the questions are immediate and spatial: _how bad is it here, can I trust that report, and what's the safest way out?_ BanjirWarga is a community platform that turns crowd reports plus environmental data into answers a resident can use on their phone, offline.
+
+## Data pipeline
+
+The backend (FastAPI + SQLAlchemy over **PostgreSQL/PostGIS**) is organized as a **medallion pipeline** — `raw → silver → gold` — so messy inputs are cleaned and aggregated in explicit, inspectable stages before anything is scored. For the MVP the sources are seeded with **synthetic, BMKG/BNPB/InaRISK-style data**, which I'm upfront about: it means the scoring is **rule-based and explainable rather than a trained black box** — a deliberate choice for a safety tool where a wrong, unexplained number is worse than a transparent one.
+
+## Scoring — explainable by design
+
+Two scores drive the product:
+
+- a **0–100 flood-risk score** per area, composed from interpretable factors;
+- a **0–1 trust score** on incoming reports, so unreliable crowd signals are down-weighted rather than blindly believed.
+
+Both are computed in dedicated services (`risk`, `trust`) so the reasoning behind a number can always be traced — the property that matters most when people make evacuation decisions on it.
+
+## Safe routing
+
+The routing service models the road network as a graph whose edge weights encode flood risk, then runs **Dijkstra** to return not the _shortest_ path but the **safest** one — avoiding high-risk segments even at the cost of distance.
+
+## Frontend
+
+A **React + TypeScript + Leaflet PWA** renders the risk surface and routes on an interactive map, built as a Progressive Web App so it degrades gracefully when connectivity does — which, during a flood, is exactly when it's needed.
+
+## Reflection
+
+BanjirWarga is the project that taught me **explainability is a feature, not a compromise.** For a tool people trust in an emergency, a transparent rule you can defend beats an opaque model you can't — and the geospatial + data-engineering scaffolding underneath is what would let real trained models slot in later.

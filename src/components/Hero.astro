@@ -1,0 +1,72 @@
+---
+import { profile, heroStats } from '../data/profile';
+import ResultsReadout from './ResultsReadout.astro';
+---
+<section class="hero">
+  <div class="container-page hero-inner">
+    <p class="eyebrow reveal" style="--i:0">{profile.roles}</p>
+    <h1 class="hero-name reveal" style="--i:1">{profile.name}</h1>
+    <p class="hero-thesis measure-wide reveal" style="--i:2">{profile.thesis}</p>
+
+    <div class="hero-cta reveal" style="--i:3">
+      <a href="/projects" class="btn-primary">
+        View selected work
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </a>
+      <a href="/resume.pdf" class="btn-ghost" target="_blank" rel="noopener">Résumé</a>
+    </div>
+
+    <div class="hero-readout reveal" style="--i:4">
+      <ResultsReadout stats={heroStats} />
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    padding-block: clamp(3.5rem, 10vh, 7rem) clamp(3rem, 7vw, 5rem);
+    min-height: min(84vh, 780px);
+    display: flex;
+    align-items: center;
+  }
+  .hero-inner { width: 100%; }
+  .hero-name {
+    font-size: clamp(2.6rem, 7.5vw, 5.1rem);
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    margin-top: 1.1rem;
+    margin-bottom: 1.6rem;
+  }
+  .hero-thesis {
+    font-size: clamp(1.1rem, 2.1vw, 1.4rem);
+    line-height: 1.55;
+    color: var(--ink-2);
+  }
+  .hero-cta { display: flex; flex-wrap: wrap; gap: 0.9rem; margin-top: 2.2rem; }
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--accent);
+    color: var(--accent-ink);
+    padding: 0.72rem 1.3rem;
+    border-radius: 10px;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: transform 0.2s ease, filter 0.2s ease;
+  }
+  .btn-primary:hover { filter: brightness(1.06); transform: translateY(-1px); }
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.72rem 1.3rem;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    color: var(--ink);
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: border-color 0.2s ease, color 0.2s ease;
+  }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .hero-readout { max-width: 60rem; margin-top: clamp(2.6rem, 5vw, 3.6rem); }
+</style>

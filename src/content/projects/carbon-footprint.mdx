@@ -1,0 +1,106 @@
+---
+title: "Carbon Footprint Prediction — A Comparative, Interpretable ML Study"
+summary: "Nine regressors benchmarked to predict an individual's carbon emissions from behavior — where disciplined preprocessing turned a middling model into a CatBoost regressor with MAE 66.4 (44% below the runner-up), and SHAP explained why."
+domain: "Interpretable ML"
+families: ["ML"]
+tags: ["CatBoost", "LightGBM", "XGBoost", "SHAP", "scikit-learn", "Pandas"]
+role: "Co-author · 3-person team"
+timeframe: "2026"
+context: "Technical report · Universitas Indonesia"
+featured: true
+order: 1
+metrics:
+  - { value: "0.9920", label: "R² · CatBoost (best of 9)" }
+  - { value: "66.37", label: "MAE · 44% below runner-up" }
+  - { value: "9", label: "Models benchmarked" }
+  - { value: "10k", label: "Individual records" }
+links:
+  - { label: "Technical report (PDF)", href: "/carbon-footprint-report.pdf" }
+---
+
+## The problem
+
+Individuals account for roughly half of greenhouse-gas emissions, yet most carbon modeling targets factories and regions, not people. We asked a narrower, more useful question: **from someone's everyday behavior — how they travel, eat, shop, heat their home — can we predict their carbon footprint accurately, cheaply, and _explainably_ enough to hand back actionable advice?**
+
+"Explainable" and "cheap" were first-class constraints, not afterthoughts. The target was a model light enough for modest hardware and transparent enough to tell a person _which_ habit to change.
+
+## The data
+
+10,000 records of individual behavior — **20 features (7 numerical, 13 categorical)** predicting a continuous `CarbonEmission` target. The hard parts were all in the categoricals:
+
+- **Heavy missingness where it mattered:** `Vehicle Type` was absent for ~67% of records — too central to drop, too sparse to impute blindly.
+- **Multi-valued fields:** `Recycling` and `Cooking_With` held _lists_ ("recycles paper and metal"), not single categories.
+- **Weak linear signal:** the correlation heatmap put almost every feature at |r| < 0.2 against the target — a clear signal that linear models would flounder and the value lived in non-linear interactions.
+
+That last finding set the entire strategy: **engineer the categoricals richly, then let tree ensembles find the interactions.**
+
+## Approach & reasoning
+
+Instead of reaching for a model first, we built the preprocessing around what the EDA told us:
+
+- **Ordinal encoding** for naturally-ordered categoricals (air-travel frequency `never → very frequently`, waste-bag size, transport mode, heating source) — preserving order the trees can split on.
+- **Multi-label one-hot** for the list-valued fields, so `Recycling = [Paper, Metal]` becomes separate signals. (This is exactly what later let SHAP attribute emissions to _specific_ materials.)
+- **Feature consolidation** — merging redundant appliance flags (`Airfryer`, `Grill`) into one via logical OR to cut noise.
+- **Missingness as signal** — encoding absent `Vehicle Type` as its own value rather than dropping or guessing.
+
+Then we benchmarked **nine regressors** on identical splits — Linear Regression and SVR, Random Forest, the gradient-boosting family (XGBoost, LightGBM, CatBoost), and an MLP — so the winner would be earned, not assumed.
+
+## Results
+
+After the enhanced preprocessing, **CatBoost led on every metric:**
+
+| Model | MAE | MSE | R² |
+| --- | --- | --- | --- |
+| **CatBoost** | **66.37** | **8,297.93** | **0.9920** |
+| LightGBM | 117.75 | 24,441.53 | 0.9765 |
+| Neural Network (MLP) | 122.80 | 27,883.48 | 0.9732 |
+| XGBoost | 127.54 | 28,190.97 | 0.9729 |
+| Gradient Boosting | 169.69 | 51,754.10 | 0.9502 |
+| Linear Regression | 168.04 | 65,542.20 | 0.9370 |
+| Random Forest | 229.06 | 87,627.97 | 0.9157 |
+| Decision Tree | 343.64 | 210,728.16 | 0.7973 |
+| Support Vector Regressor | 667.32 | 762,675.95 | 0.2665 |
+
+Two things are worth reading carefully:
+
+**1. The MAE gap is the real story.** On R², CatBoost (0.9920) edges LightGBM (0.9765) by a hair. But on **mean absolute error it's 66.4 vs 117.8 — a 44% reduction** — and on MSE roughly a third. When models cluster on R², MAE is the honest tiebreaker, and CatBoost wins it decisively.
+
+**2. Preprocessing, not model choice, delivered most of the gain.** The same models, before vs after the pipeline:
+
+| Model | R² before | R² after | Δ |
+| --- | --- | --- | --- |
+| CatBoost | 0.9324 | **0.9920** | +0.0596 |
+| LightGBM | 0.9243 | 0.9765 | +0.0522 |
+| XGBoost | 0.9107 | 0.9729 | +0.0622 |
+| Neural Network (MLP) | 0.7562 | 0.9732 | **+0.2170** |
+| Linear Regression | 0.7589 | 0.9370 | +0.1781 |
+
+CatBoost's MAE fell from 199.5 to 66.4 — by two-thirds — purely from better data handling. The lesson I'd defend anywhere: **feature engineering is usually where regression problems are won.**
+
+We report the two headline metrics in the usual way:
+
+$$
+R^2 = 1 - \frac{\sum_i (y_i - \hat{y}_i)^2}{\sum_i (y_i - \bar{y})^2}, \qquad \mathrm{MAE} = \frac{1}{n}\sum_i \lvert y_i - \hat{y}_i \rvert.
+$$
+
+## Interpretability — SHAP
+
+A number isn't an insight, so we ran **SHAP** on the final CatBoost model to turn it into advice:
+
+- **Vehicle monthly distance dominates** — by a wide margin the single largest driver of predicted emissions.
+- **Air-travel frequency** is next: "very frequently" pushes emissions up sharply; "never" pulls them down.
+- Consumer habits (new clothes per month, waste volume) matter at the margin, and **electric vehicles land near neutral** while petrol nudges emissions upward.
+
+That maps cleanly onto real advice — _drive less, fly less_ — which was the entire point: a model a person can act on.
+
+## Honest limitations
+
+Writing this up truthfully matters more than inflating it:
+
+- The 0.9920 headline comes from a **single 80/20 split**, not cross-validation. The one cross-validated figure in the study is **R² 0.991 (5-fold)**, and it belongs to a _separate_ stacking regressor (RF + XGBoost + CatBoost → Ridge) that generalized well (hold-out RMSE 97.7). If I revisited this, k-fold CV on the headline model would be the first fix.
+- CatBoost's R² lead over LightGBM is small — which is precisely why I lead with MAE, where the win is unambiguous.
+- Hyperparameters and the dataset citation should be pinned down for full reproducibility.
+
+## Reflection
+
+The result I actually care about isn't 0.9920 — it's the _shape_ of the gain: a middling pipeline became a strong one through preprocessing discipline, and SHAP made the black box say something a person could use. Rigorous benchmarking paired with interpretability is how I try to approach every modeling problem.

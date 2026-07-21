@@ -1,0 +1,39 @@
+---
+title: "Loan-Default Prediction at Scale"
+summary: "A textbook-clean gradient-boosting pipeline over ~850k loan applications — feature engineering, five-fold out-of-fold cross-validation, and leakage-free categorical handling — reaching an OOF ROC-AUC of 0.923."
+domain: "Tabular ML"
+families: ["ML"]
+tags: ["CatBoost", "scikit-learn", "Feature Engineering", "Cross-Validation"]
+role: "Solo · Kaggle"
+timeframe: "2025"
+context: "Kaggle Playground Series (S5E11)"
+featured: false
+order: 6
+metrics:
+  - { value: "0.9227", label: "Out-of-fold ROC-AUC" }
+  - { value: "849k", label: "Rows (train + test)" }
+  - { value: "5-fold", label: "Stratified CV, no leakage" }
+  - { value: "3,500", label: "Boosting iters (early-stopped)" }
+---
+
+## The problem
+
+Predict whether a loan will be paid back, from a large tabular dataset — **~594k training rows and ~255k test rows, 13 features**. At this scale the interesting challenge isn't exotic modeling; it's doing the fundamentals _correctly and without leaking_, so the validation number you report is the one you'll actually see on unseen data.
+
+## Approach & reasoning
+
+**Feature engineering** targeted the domain: I split the combined `grade_subgrade` field into an ordinal grade level, and built ratio features that lenders actually reason about — `loan_to_income`, `debt_times_loan` — plus log transforms (`log_income`, `log_loan_amount`) to tame skew. Seven categorical columns were handed to **CatBoost**, which encodes them natively rather than forcing a lossy one-hot.
+
+**Validation was the point.** I used **5-fold stratified cross-validation** with out-of-fold predictions — every training row is scored by a model that never saw it — and averaged the test predictions across folds. CatBoost (depth 6, learning rate 0.04, up to 3,500 iterations) trained with **early stopping on a held-out fold** so it never overfit its own training curve.
+
+## Result
+
+A clean **out-of-fold ROC-AUC of 0.9227**, consistent across folds — a number I trust precisely because it was measured on data each fold's model hadn't touched.
+
+## Honest note
+
+This is a _synthetic_ Playground dataset, so the point isn't novelty — it's discipline. I include it because it's the cleanest demonstration I have of the workflow I'd bring to a real credit-risk problem: sensible features, native categorical handling, and a cross-validation setup with no leakage between the data a model learns from and the data it's judged on.
+
+## Reflection
+
+Most tabular "wins" are really validation wins. Get the cross-validation right and the model almost picks itself; get it wrong and every downstream number is a mirage.

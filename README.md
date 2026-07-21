@@ -1,16 +1,43 @@
-# React + Vite
+# aldofahrezy.github.io
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Personal portfolio of **Muhammad Aldo Fahrezy** — Data Science & AI.
+Content-first, statically rendered, with in-depth project case studies.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **[Astro](https://astro.build)** — static site generator (zero JS by default)
+- **MDX** content collections for the project case studies
+- **Tailwind CSS v4** (via `@tailwindcss/vite`) + a small design-token layer
+- **KaTeX** (`remark-math` + `rehype-katex`) for math, **Shiki** for code
+- Self-hosted variable fonts via **Fontsource** (Space Grotesk, Inter, Newsreader, JetBrains Mono)
+- Light/dark theme, `prefers-reduced-motion` respected, JSON-LD + sitemap
 
-## React Compiler
+## Develop
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```sh
+npm install
+npm run dev        # http://localhost:4321
+npm run build      # static output → dist/
+npm run preview    # serve the build locally
+```
 
-## Expanding the ESLint configuration
+## Structure
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```
+src/
+  pages/            index.astro, projects/index.astro, projects/[...slug].astro
+  layouts/          BaseLayout.astro, CaseStudyLayout.astro
+  components/        Hero, Nav, Footer, ThemeToggle, ProjectRow, ResultsReadout
+  content/projects/ *.mdx  (one case study per file)
+  data/profile.ts   bio, education, experience, honors, skills, competitions
+  styles/global.css design tokens + prose styles
+public/             favicon, résumé, hosted report PDF, OG image
+```
+
+## Deploy
+
+Built to `dist/` and published to GitHub Pages:
+
+```sh
+npm run deploy     # builds, then pushes dist/ to the gh-pages branch
+```

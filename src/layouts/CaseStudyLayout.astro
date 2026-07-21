@@ -1,0 +1,93 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import ResultsReadout from '../components/ResultsReadout.astro';
+import 'katex/dist/katex.min.css';
+
+interface Props {
+  data: {
+    title: string;
+    summary: string;
+    domain: string;
+    role?: string;
+    timeframe?: string;
+    context?: string;
+    metrics?: { value: string; label: string }[];
+    links?: { label: string; href: string }[];
+  };
+  prev?: { slug: string; title: string } | null;
+  next?: { slug: string; title: string } | null;
+}
+const { data, prev = null, next = null } = Astro.props;
+const { title, summary, domain, role, timeframe, context, metrics = [], links = [] } = data;
+---
+<BaseLayout title={`${title} — Muhammad Aldo Fahrezy`} description={summary} type="article">
+  <article class="cs">
+    <div class="container-page cs-inner">
+      <a href="/projects" class="cs-back">← All work</a>
+
+      <p class="eyebrow cs-domain">{domain}</p>
+      <h1 class="cs-title">{title}</h1>
+      <p class="cs-summary">{summary}</p>
+
+      <div class="cs-meta">
+        {role && <span><span class="cs-meta-k">Role</span>{role}</span>}
+        {timeframe && <span><span class="cs-meta-k">When</span>{timeframe}</span>}
+        {context && <span><span class="cs-meta-k">Context</span>{context}</span>}
+      </div>
+
+      {links.length > 0 && (
+        <div class="cs-links">
+          {links.map((l) => (
+            <a href={l.href} target="_blank" rel="noopener" class="cs-link">{l.label} <span aria-hidden="true">↗</span></a>
+          ))}
+        </div>
+      )}
+
+      {metrics.length > 0 && (
+        <div class="cs-readout"><ResultsReadout stats={metrics} label="Key results" /></div>
+      )}
+
+      <div class="prose cs-body">
+        <slot />
+      </div>
+
+      <nav class="cs-nav" aria-label="More projects">
+        {prev ? (
+          <a href={`/projects/${prev.slug}`} class="cs-nav-item">
+            <span class="cs-nav-k">← Previous</span>
+            <span class="cs-nav-t">{prev.title}</span>
+          </a>
+        ) : <span></span>}
+        {next ? (
+          <a href={`/projects/${next.slug}`} class="cs-nav-item cs-nav-next">
+            <span class="cs-nav-k">Next →</span>
+            <span class="cs-nav-t">{next.title}</span>
+          </a>
+        ) : <span></span>}
+      </nav>
+    </div>
+  </article>
+</BaseLayout>
+
+<style>
+  .cs { padding-block: clamp(2rem, 5vw, 3.5rem) clamp(3rem, 8vw, 6rem); }
+  .cs-inner { max-width: 48rem; }
+  .cs-back { font-size: 0.85rem; color: var(--ink-2); font-family: var(--font-mono); }
+  .cs-back:hover { color: var(--accent); }
+  .cs-domain { margin-top: 2.2rem; }
+  .cs-title { font-size: clamp(2rem, 5vw, 3rem); margin-top: 0.8rem; letter-spacing: -0.03em; }
+  .cs-summary { font-family: var(--font-serif); font-size: 1.3rem; line-height: 1.5; color: var(--ink-2); margin-top: 1.2rem; }
+  .cs-meta { display: flex; flex-wrap: wrap; gap: 1.5rem; margin-top: 1.8rem; font-size: 0.88rem; color: var(--ink); }
+  .cs-meta-k { font-family: var(--font-mono); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-3); margin-right: 0.5rem; }
+  .cs-links { display: flex; flex-wrap: wrap; gap: 0.7rem; margin-top: 1.6rem; }
+  .cs-link { font-size: 0.85rem; padding: 0.5rem 1rem; border: 1px solid var(--line); border-radius: 9px; color: var(--ink); transition: border-color 0.2s ease, color 0.2s ease; }
+  .cs-link:hover { border-color: var(--accent); color: var(--accent); }
+  .cs-readout { margin-top: 2.2rem; }
+  .cs-body { margin-top: 2.8rem; }
+  .cs-nav { display: flex; justify-content: space-between; gap: 1rem; margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--line); }
+  .cs-nav-item { display: flex; flex-direction: column; gap: 0.3rem; max-width: 47%; }
+  .cs-nav-next { text-align: right; margin-left: auto; align-items: flex-end; }
+  .cs-nav-k { font-family: var(--font-mono); font-size: 0.72rem; color: var(--ink-3); }
+  .cs-nav-t { color: var(--ink); font-weight: 500; }
+  .cs-nav-item:hover .cs-nav-t { color: var(--accent); }
+</style>

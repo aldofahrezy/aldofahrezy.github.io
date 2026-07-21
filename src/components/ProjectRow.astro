@@ -1,0 +1,80 @@
+---
+interface Props {
+  href: string;
+  domain: string;
+  title: string;
+  summary: string;
+  tags?: string[];
+  metric?: { value: string; label: string } | null;
+  context?: string;
+  families?: string[];
+}
+const { href, domain, title, summary, tags = [], metric = null, context, families = [] } = Astro.props;
+---
+<a href={href} class="project-row" data-families={families.join(' ')}>
+  <div class="pr-main">
+    <p class="eyebrow pr-domain">{domain}</p>
+    <h3 class="pr-title">{title}</h3>
+    <p class="pr-summary">{summary}</p>
+    {tags.length > 0 && (
+      <ul class="pr-tags">{tags.slice(0, 6).map((t) => <li>{t}</li>)}</ul>
+    )}
+  </div>
+  <div class="pr-side">
+    {metric && (
+      <div class="pr-metric">
+        <span class="pr-metric-val metric-num">{metric.value}</span>
+        <span class="pr-metric-label">{metric.label}</span>
+      </div>
+    )}
+    {context && <p class="pr-context">{context}</p>}
+    <span class="pr-cta">View case study <span class="pr-arrow" aria-hidden="true">→</span></span>
+  </div>
+</a>
+
+<style>
+  .project-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 2rem;
+    padding: 2rem 0;
+    border-top: 1px solid var(--line);
+    align-items: start;
+    transition: background 0.2s ease;
+  }
+  .project-row:hover { background: color-mix(in oklab, var(--ink) 2.5%, transparent); }
+  .pr-domain { margin-bottom: 0.7rem; }
+  .pr-title { font-size: clamp(1.25rem, 2.4vw, 1.6rem); transition: color 0.2s ease; }
+  .project-row:hover .pr-title { color: var(--accent); }
+  .pr-summary { color: var(--ink-2); margin-top: 0.5rem; max-width: 46rem; font-size: 0.98rem; line-height: 1.6; }
+  .pr-tags { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 1rem; }
+  .pr-tags li {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--ink-3);
+    border: 1px solid var(--line);
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+  }
+  .pr-side {
+    text-align: right;
+    min-width: 11rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.85rem;
+  }
+  .pr-metric { display: flex; flex-direction: column; align-items: flex-end; gap: 0.2rem; }
+  .pr-metric-val { font-size: 1.55rem; color: var(--ink); line-height: 1; }
+  .pr-metric-label { font-size: 0.72rem; color: var(--ink-3); max-width: 11rem; }
+  .pr-context { font-size: 0.75rem; color: var(--ink-3); font-family: var(--font-mono); max-width: 12rem; }
+  .pr-cta { font-size: 0.85rem; color: var(--accent); display: inline-flex; align-items: center; gap: 0.4rem; }
+  .pr-arrow { transition: transform 0.25s ease; }
+  .project-row:hover .pr-arrow { transform: translateX(4px); }
+
+  @media (max-width: 720px) {
+    .project-row { grid-template-columns: 1fr; gap: 1.2rem; }
+    .pr-side { text-align: left; align-items: flex-start; }
+    .pr-summary { max-width: none; }
+  }
+</style>

@@ -1,0 +1,52 @@
+---
+title: "LigaPass — Cross-Platform Football Ticketing Ecosystem"
+summary: "A football ticketing, news, and reviews platform spanning a Django SSR web app and a Flutter mobile client — with real multi-rail Midtrans payments, server-verified Google OAuth, and a resilient three-tier match-data pipeline. Deployed, with signed-APK CI/CD."
+domain: "Full-Stack"
+families: ["Full-Stack"]
+tags: ["Django", "Flutter", "PostgreSQL", "Midtrans", "Google OAuth", "GitHub Actions"]
+role: "Full-stack · 5-person team"
+timeframe: "2025"
+context: "Platform-Based Programming · Universitas Indonesia"
+featured: false
+order: 9
+metrics:
+  - { value: "2", label: "Clients: SSR web + Flutter" }
+  - { value: "3", label: "Midtrans payment rails" }
+  - { value: "7", label: "Django domain apps" }
+  - { value: "5", label: "Team · UI PBP project" }
+links:
+  - { label: "Backend", href: "https://github.com/PBP-C-06/LigaPass" }
+  - { label: "Mobile", href: "https://github.com/PBP-C-06/LigaPass-mobile" }
+---
+
+## The problem
+
+Buying a match ticket, catching club news, and leaving a review shouldn't mean three different apps. LigaPass was our team's attempt at one football ecosystem that works identically on the web and on a phone — which, architecturally, means a single backend has to serve two very different clients cleanly.
+
+I worked across the stack on a five-person team; the parts I'll defend in detail below are the ones I can point to in the code.
+
+## Architecture
+
+One Django backend, two front doors. Seven domain apps (`authentication`, `profiles`, `matches`, `bookings`, `news`, `reviews`, `main`) each expose **server-rendered HTML** for the web _and_ a parallel set of **JSON endpoints** the Flutter client consumes through per-feature service classes. Auth state is a Django session cookie, carried into the mobile app via `pbp_django_auth`'s `CookieRequest` so the same session works on both surfaces.
+
+> A note on honesty: these JSON endpoints are hand-written Django views returning `JsonResponse`, not Django REST Framework serializers/viewsets. It's a REST-_style_ API, and I'd rather describe it accurately than dress it up.
+
+## The parts worth showing
+
+**Real payments, not a mock.** The booking flow integrates the **Midtrans Core API** (sandbox) across three rails — **credit card with 3-D Secure, bank-transfer virtual accounts (5 banks), and QRIS** — with server-to-server status sync, cancellation, and a signed webhook (`midtrans_notification`) that's correctly CSRF-exempt and unauthenticated. Ticket ownership is enforced on every booking view with `get_object_or_404(Booking, …, user=request.user)`. Getting a real multi-rail payment flow correct end-to-end was the most valuable thing I learned here.
+
+**Server-verified Google sign-in.** Google OAuth tokens are verified **server-side** with `google.oauth2.id_token.verify_oauth2_token(...)` before we `get_or_create` and log the user in — the right place to trust an identity, not the client.
+
+**A resilient match-data pipeline.** Live scores and fixtures come from an external football API that can rate-limit or fail, so the ingestion layer degrades in three tiers: **live API → a normalized JSON cache → a database fixture**, each logged and surfaced back to the admin UI. It also standardizes ~40 messy external team names before persisting, caches team/venue lookups in-loop to cut queries, and uses `update_or_create` + `bulk_create` for idempotent syncs. This is the most production-minded piece of the codebase and the part I'd most want to talk through.
+
+**Defense in depth on user content.** A custom `SanitizeHTMLMiddleware` runs `bleach` over posted content (news, comments) against a tag/attribute allow-list, forcing `rel="nofollow noopener noreferrer"` on links — a concrete XSS guard rather than a checkbox.
+
+## What shipped, and what didn't
+
+Shipped and working: the full cart → booking → payment → digital-ticket (barcode) flow, role-based access (user / admin / journalist), threaded comments with likes, reviews, and the match pipeline — deployed on the University of Indonesia's PWS with a **GitHub Actions pipeline that builds a signed release APK** (keystore injected from CI secrets).
+
+Honest about the edges: a Django-Channels live-score push was **scaffolded but not fully wired** (no channel layer configured, no client consumer), so real-time scores are architecture, not a working feature. A mobile auth-refresh interceptor is a placeholder. I'd rather a reviewer hear that from me than find it in the repo.
+
+## Reflection
+
+The through-line I took from LigaPass: **serving two clients from one backend forces you to design real API boundaries**, and _payments and identity are where correctness actually counts_. The match-ingestion pipeline is the piece I'm proudest of, precisely because it's built around the assumption that the upstream will fail.
