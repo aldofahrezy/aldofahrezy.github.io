@@ -1,0 +1,165 @@
+<!DOCTYPE html><html lang="en" data-astro-cid-z4jru4n3><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/favicon.svg" type="image/svg+xml"><title>Carbon Footprint Prediction — A Comparative, Interpretable ML Study — Muhammad Aldo Fahrezy</title><meta name="description" content="Nine regressors benchmarked to predict an individual's carbon emissions from behavior — where disciplined preprocessing turned a middling model into a CatBoost regressor with MAE 66.4 (44% below the runner-up), and SHAP explained why."><link rel="canonical" href="https://aldofahrezy.github.io/projects/carbon-footprint/"><meta name="author" content="Muhammad Aldo Fahrezy"><meta name="theme-color" content="#f7f8fa" media="(prefers-color-scheme: light)"><meta name="theme-color" content="#0b0e13" media="(prefers-color-scheme: dark)"><meta property="og:type" content="article"><meta property="og:title" content="Carbon Footprint Prediction — A Comparative, Interpretable ML Study — Muhammad Aldo Fahrezy"><meta property="og:description" content="Nine regressors benchmarked to predict an individual's carbon emissions from behavior — where disciplined preprocessing turned a middling model into a CatBoost regressor with MAE 66.4 (44% below the runner-up), and SHAP explained why."><meta property="og:url" content="https://aldofahrezy.github.io/projects/carbon-footprint/"><meta property="og:image" content="https://aldofahrezy.github.io/og-default.png"><meta property="og:site_name" content="Muhammad Aldo Fahrezy"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Carbon Footprint Prediction — A Comparative, Interpretable ML Study — Muhammad Aldo Fahrezy"><meta name="twitter:description" content="Nine regressors benchmarked to predict an individual's carbon emissions from behavior — where disciplined preprocessing turned a middling model into a CatBoost regressor with MAE 66.4 (44% below the runner-up), and SHAP explained why."><meta name="twitter:image" content="https://aldofahrezy.github.io/og-default.png"><link rel="sitemap" href="/sitemap-index.xml"><!-- Set theme + js flag before paint to avoid FOUC / hidden content --><script>
+      (function () {
+        var d = document.documentElement;
+        d.classList.add('js');
+        try {
+          var q = new URLSearchParams(location.search).get('theme');
+          var t = q || localStorage.getItem('theme');
+          if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          if (t === 'dark') d.classList.add('dark'); else d.classList.remove('dark');
+        } catch (e) {}
+      })();
+    </script><script type="application/ld+json">{"@context":"https://schema.org","@type":"Person","name":"Muhammad Aldo Fahrezy","alternateName":"Aldo Fahrezy","url":"https://aldofahrezy.github.io","email":"mailto:aldofahrezy@gmail.com","jobTitle":"Data Science & AI Engineer","alumniOf":{"@type":"CollegeOrUniversity","name":"Universitas Indonesia"},"knowsAbout":["Machine Learning","Deep Learning","Computer Vision","Natural Language Processing","Data Science","Software Engineering"],"nationality":"Indonesian","sameAs":["https://github.com/aldofahrezy","https://www.linkedin.com/in/aldofahrezy"]}</script><link rel="stylesheet" href="/_astro/_astro_content.CK1uWCZ6.css"><style>.readout[data-astro-cid-t7xek33r]{grid-template-columns:repeat(var(--cols,4), 1fr);background:var(--line);border:1px solid var(--line);border-radius:12px;gap:1px;margin:0;display:grid;overflow:hidden}.readout-item[data-astro-cid-t7xek33r]{background:var(--surface);flex-direction:column;gap:.4rem;padding:1.15rem 1.25rem;display:flex}.readout-value[data-astro-cid-t7xek33r]{color:var(--ink);font-size:clamp(1.3rem,3vw,1.8rem);line-height:1}.readout-label[data-astro-cid-t7xek33r]{color:var(--ink-3);font-size:.72rem;line-height:1.35}@media (width<=640px){.readout[data-astro-cid-t7xek33r]{grid-template-columns:repeat(2,1fr)}}
+</style><link rel="stylesheet" href="/_astro/_..CaxOn_Gx.css"></head><body data-astro-cid-z4jru4n3><a href="#main" class="skip-link" data-astro-cid-z4jru4n3>Skip to content</a><header class="nav" data-astro-cid-wpvy4v7s><div class="container-page nav-inner" data-astro-cid-wpvy4v7s><a href="/" class="wordmark" aria-label="Home — Aldo Fahrezy" data-astro-cid-wpvy4v7s>Aldo&nbsp;Fahrezy</a><div class="nav-right" data-astro-cid-wpvy4v7s><nav class="nav-links" aria-label="Primary" data-astro-cid-wpvy4v7s><a href="/projects" class="nav-link link-line" data-astro-cid-wpvy4v7s>Work</a><a href="/#about" class="nav-link link-line" data-astro-cid-wpvy4v7s>About</a><a href="/#skills" class="nav-link link-line" data-astro-cid-wpvy4v7s>Skills</a><a href="/#contact" class="nav-link link-line" data-astro-cid-wpvy4v7s>Contact</a></nav><a href="/resume.pdf" class="nav-resume" target="_blank" rel="noopener" data-astro-cid-wpvy4v7s>Résumé</a><button id="theme-toggle" type="button" class="theme-toggle" aria-label="Toggle light or dark theme" title="Toggle theme" data-astro-cid-l6lhmie6><svg class="icon icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" data-astro-cid-l6lhmie6><circle cx="12" cy="12" r="4" data-astro-cid-l6lhmie6></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" data-astro-cid-l6lhmie6></path></svg><svg class="icon icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" data-astro-cid-l6lhmie6><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" data-astro-cid-l6lhmie6></path></svg></button><script type="module">document.getElementById(`theme-toggle`)?.addEventListener(`click`,()=>{let e=document.documentElement.classList.toggle(`dark`);try{localStorage.setItem(`theme`,e?`dark`:`light`)}catch{}});</script><details class="menu" data-astro-cid-wpvy4v7s><summary aria-label="Open menu" data-astro-cid-wpvy4v7s><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" data-astro-cid-wpvy4v7s><path d="M4 7h16M4 12h16M4 17h16" data-astro-cid-wpvy4v7s></path></svg></summary><div class="menu-panel" data-astro-cid-wpvy4v7s><a href="/projects" class="menu-link" data-astro-cid-wpvy4v7s>Work</a><a href="/#about" class="menu-link" data-astro-cid-wpvy4v7s>About</a><a href="/#skills" class="menu-link" data-astro-cid-wpvy4v7s>Skills</a><a href="/#contact" class="menu-link" data-astro-cid-wpvy4v7s>Contact</a><a href="/resume.pdf" class="menu-link" target="_blank" rel="noopener" data-astro-cid-wpvy4v7s>Résumé ↗</a></div></details></div></div></header><main id="main" data-astro-cid-z4jru4n3><article class="cs" data-astro-cid-iu2tt25f><div class="container-page cs-inner" data-astro-cid-iu2tt25f><a href="/projects" class="cs-back" data-astro-cid-iu2tt25f>← All work</a><p class="eyebrow cs-domain" data-astro-cid-iu2tt25f>Interpretable ML</p><h1 class="cs-title" data-astro-cid-iu2tt25f>Carbon Footprint Prediction — A Comparative, Interpretable ML Study</h1><p class="cs-summary" data-astro-cid-iu2tt25f>Nine regressors benchmarked to predict an individual&#39;s carbon emissions from behavior — where disciplined preprocessing turned a middling model into a CatBoost regressor with MAE 66.4 (44% below the runner-up), and SHAP explained why.</p><div class="cs-meta" data-astro-cid-iu2tt25f><span data-astro-cid-iu2tt25f><span class="cs-meta-k" data-astro-cid-iu2tt25f>Role</span>Co-author · 3-person team</span><span data-astro-cid-iu2tt25f><span class="cs-meta-k" data-astro-cid-iu2tt25f>When</span>2026</span><span data-astro-cid-iu2tt25f><span class="cs-meta-k" data-astro-cid-iu2tt25f>Context</span>Technical report · Universitas Indonesia</span></div><div class="cs-links" data-astro-cid-iu2tt25f><a href="/carbon-footprint-report.pdf" target="_blank" rel="noopener" class="cs-link" data-astro-cid-iu2tt25f>Technical report (PDF) <span aria-hidden="true" data-astro-cid-iu2tt25f>↗</span></a></div><div class="cs-readout" data-astro-cid-iu2tt25f><dl class="readout" style="--cols:4" aria-label="Key results" data-astro-cid-t7xek33r><div class="readout-item" data-astro-cid-t7xek33r><dd class="readout-value metric-num" data-astro-cid-t7xek33r>0.9920</dd><dt class="readout-label" data-astro-cid-t7xek33r>R² · CatBoost (best of 9)</dt></div><div class="readout-item" data-astro-cid-t7xek33r><dd class="readout-value metric-num" data-astro-cid-t7xek33r>66.37</dd><dt class="readout-label" data-astro-cid-t7xek33r>MAE · 44% below runner-up</dt></div><div class="readout-item" data-astro-cid-t7xek33r><dd class="readout-value metric-num" data-astro-cid-t7xek33r>9</dd><dt class="readout-label" data-astro-cid-t7xek33r>Models benchmarked</dt></div><div class="readout-item" data-astro-cid-t7xek33r><dd class="readout-value metric-num" data-astro-cid-t7xek33r>10k</dd><dt class="readout-label" data-astro-cid-t7xek33r>Individual records</dt></div></dl></div><div class="prose cs-body" data-astro-cid-iu2tt25f><h2 id="the-problem">The problem</h2>
+<p>Individuals account for roughly half of greenhouse-gas emissions, yet most carbon modeling targets factories and regions, not people. We asked a narrower, more useful question: <strong>from someone’s everyday behavior — how they travel, eat, shop, heat their home — can we predict their carbon footprint accurately, cheaply, and <em>explainably</em> enough to hand back actionable advice?</strong></p>
+<p>“Explainable” and “cheap” were first-class constraints, not afterthoughts. The target was a model light enough for modest hardware and transparent enough to tell a person <em>which</em> habit to change.</p>
+<h2 id="the-data">The data</h2>
+<p>10,000 records of individual behavior — <strong>20 features (7 numerical, 13 categorical)</strong> predicting a continuous <code>CarbonEmission</code> target. The hard parts were all in the categoricals:</p>
+<ul>
+<li><strong>Heavy missingness where it mattered:</strong> <code>Vehicle Type</code> was absent for ~67% of records — too central to drop, too sparse to impute blindly.</li>
+<li><strong>Multi-valued fields:</strong> <code>Recycling</code> and <code>Cooking_With</code> held <em>lists</em> (“recycles paper and metal”), not single categories.</li>
+<li><strong>Weak linear signal:</strong> the correlation heatmap put almost every feature at |r| &lt; 0.2 against the target — a clear signal that linear models would flounder and the value lived in non-linear interactions.</li>
+</ul>
+<p>That last finding set the entire strategy: <strong>engineer the categoricals richly, then let tree ensembles find the interactions.</strong></p>
+<h2 id="approach--reasoning">Approach &amp; reasoning</h2>
+<p>Instead of reaching for a model first, we built the preprocessing around what the EDA told us:</p>
+<ul>
+<li><strong>Ordinal encoding</strong> for naturally-ordered categoricals (air-travel frequency <code>never → very frequently</code>, waste-bag size, transport mode, heating source) — preserving order the trees can split on.</li>
+<li><strong>Multi-label one-hot</strong> for the list-valued fields, so <code>Recycling = [Paper, Metal]</code> becomes separate signals. (This is exactly what later let SHAP attribute emissions to <em>specific</em> materials.)</li>
+<li><strong>Feature consolidation</strong> — merging redundant appliance flags (<code>Airfryer</code>, <code>Grill</code>) into one via logical OR to cut noise.</li>
+<li><strong>Missingness as signal</strong> — encoding absent <code>Vehicle Type</code> as its own value rather than dropping or guessing.</li>
+</ul>
+<p>Then we benchmarked <strong>nine regressors</strong> on identical splits — Linear Regression and SVR, Random Forest, the gradient-boosting family (XGBoost, LightGBM, CatBoost), and an MLP — so the winner would be earned, not assumed.</p>
+<h2 id="results">Results</h2>
+<p>After the enhanced preprocessing, <strong>CatBoost led on every metric:</strong></p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Model</th><th>MAE</th><th>MSE</th><th>R²</th></tr></thead><tbody><tr><td><strong>CatBoost</strong></td><td><strong>66.37</strong></td><td><strong>8,297.93</strong></td><td><strong>0.9920</strong></td></tr><tr><td>LightGBM</td><td>117.75</td><td>24,441.53</td><td>0.9765</td></tr><tr><td>Neural Network (MLP)</td><td>122.80</td><td>27,883.48</td><td>0.9732</td></tr><tr><td>XGBoost</td><td>127.54</td><td>28,190.97</td><td>0.9729</td></tr><tr><td>Gradient Boosting</td><td>169.69</td><td>51,754.10</td><td>0.9502</td></tr><tr><td>Linear Regression</td><td>168.04</td><td>65,542.20</td><td>0.9370</td></tr><tr><td>Random Forest</td><td>229.06</td><td>87,627.97</td><td>0.9157</td></tr><tr><td>Decision Tree</td><td>343.64</td><td>210,728.16</td><td>0.7973</td></tr><tr><td>Support Vector Regressor</td><td>667.32</td><td>762,675.95</td><td>0.2665</td></tr></tbody></table>
+<p>Two things are worth reading carefully:</p>
+<p><strong>1. The MAE gap is the real story.</strong> On R², CatBoost (0.9920) edges LightGBM (0.9765) by a hair. But on <strong>mean absolute error it’s 66.4 vs 117.8 — a 44% reduction</strong> — and on MSE roughly a third. When models cluster on R², MAE is the honest tiebreaker, and CatBoost wins it decisively.</p>
+<p><strong>2. Preprocessing, not model choice, delivered most of the gain.</strong> The same models, before vs after the pipeline:</p>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<table><thead><tr><th>Model</th><th>R² before</th><th>R² after</th><th>Δ</th></tr></thead><tbody><tr><td>CatBoost</td><td>0.9324</td><td><strong>0.9920</strong></td><td>+0.0596</td></tr><tr><td>LightGBM</td><td>0.9243</td><td>0.9765</td><td>+0.0522</td></tr><tr><td>XGBoost</td><td>0.9107</td><td>0.9729</td><td>+0.0622</td></tr><tr><td>Neural Network (MLP)</td><td>0.7562</td><td>0.9732</td><td><strong>+0.2170</strong></td></tr><tr><td>Linear Regression</td><td>0.7589</td><td>0.9370</td><td>+0.1781</td></tr></tbody></table>
+<p>CatBoost’s MAE fell from 199.5 to 66.4 — by two-thirds — purely from better data handling. The lesson I’d defend anywhere: <strong>feature engineering is usually where regression problems are won.</strong></p>
+<p>We report the two headline metrics in the usual way:</p>
+<span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msup><mi>R</mi><mn>2</mn></msup><mo>=</mo><mn>1</mn><mo>−</mo><mfrac><mrow><munder><mo>∑</mo><mi>i</mi></munder><mo stretchy="false">(</mo><msub><mi>y</mi><mi>i</mi></msub><mo>−</mo><msub><mover accent="true"><mi>y</mi><mo>^</mo></mover><mi>i</mi></msub><msup><mo stretchy="false">)</mo><mn>2</mn></msup></mrow><mrow><munder><mo>∑</mo><mi>i</mi></munder><mo stretchy="false">(</mo><msub><mi>y</mi><mi>i</mi></msub><mo>−</mo><mover accent="true"><mi>y</mi><mo>ˉ</mo></mover><msup><mo stretchy="false">)</mo><mn>2</mn></msup></mrow></mfrac><mo separator="true">,</mo><mspace width="2em"></mspace><mrow><mi mathvariant="normal">M</mi><mi mathvariant="normal">A</mi><mi mathvariant="normal">E</mi></mrow><mo>=</mo><mfrac><mn>1</mn><mi>n</mi></mfrac><munder><mo>∑</mo><mi>i</mi></munder><mo stretchy="false">∣</mo><msub><mi>y</mi><mi>i</mi></msub><mo>−</mo><msub><mover accent="true"><mi>y</mi><mo>^</mo></mover><mi>i</mi></msub><mo stretchy="false">∣</mo><mi mathvariant="normal">.</mi></mrow><annotation encoding="application/x-tex">R^2 = 1 - \frac{\sum_i (y_i - \hat{y}_i)^2}{\sum_i (y_i - \bar{y})^2}, \qquad \mathrm{MAE} = \frac{1}{n}\sum_i \lvert y_i - \hat{y}_i \rvert.</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8641em"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0077em">R</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8641em"><span style="top:-3.113em;margin-right:0.05em"><span class="pstrut" style="height:2.7em"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em"></span></span><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em"></span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222em"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em"></span></span><span class="base"><span class="strut" style="height:2.4895em;vertical-align:-0.9857em"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.5038em"><span style="top:-2.314em"><span class="pstrut" style="height:3em"></span><span class="mord"><span class="mop"><span class="mop op-symbol small-op" style="position:relative;top:0em">∑</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.162em"><span style="top:-2.4003em;margin-left:0em;margin-right:0.05em"><span class="pstrut" style="height:2.7em"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2997em"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0359em">y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em"><span class="pstrut" style="height:2.7em"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em"></span><span class="mord accent"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.5678em"><span style="top:-3em"><span class="pstrut" style="height:3em"></span><span class="mord mathnormal" style="margin-right:0.0359em">y</span></span><span style="top:-3em"><span class="pstrut" style="height:3em"></span><span class="accent-body" style="left:-0.1944em"><span class="mord">ˉ</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1944em"><span></span></span></span></span></span><span class="mclose"><span class="mclose">)</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7401em"><span style="top:-2.989em;margin-right:0.05em"><span class="pstrut" style="height:2.7em"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span></span></span><span style="top:-3.23em"><span class="pstrut" style="height:3em"></span><span class="frac-line" style="border-bottom-width:0.04em"></span></span><span style="top:-3.6897em"><span class="pstrut" style="height:3em"></span><span class="mord"><span class="mop"><span class="mop op-symbol small-op" style="position:relative;top:0em">∑</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.162em"><span style="top:-2.4003em;margin-left:0em;margin-right:0.05em"><span class="pstrut" style="height:2.7em"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2997em"><span></span></span></span></span></span></span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0359em">y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em"><span class="pstrut" style="height:2.7em"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em"></span><span class="mord"><span class="mord accent"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.6944em"><span style="top:-3em"><span class="pstrut" style="height:3em"></span><span class="mord mathnormal" style="margin-right:0.0359em">y</span></span><span style="top:-3em"><span class="pstrut" style="height:3em"></span><span class="accent-body" style="left:-0.1944em"><span class="mord">^</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1944em"><span></span></span></span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em"><span class="pstrut" style="height:2.7em"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em"><span></span></span></span></span></span></span><span class="mclose"><span class="mclose">)</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em"><span style="top:-3.063em;margin-right:0.05em"><span class="pstrut" style="height:2.7em"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.9857em"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:2em"></span><span class="mspace" style="margin-right:0.1667em"></span><span class="mord"><span class="mord mathrm">MAE</span></span><span class="mspace" style="margin-right:0.2778em"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em"></span></span><span class="base"><span class="strut" style="height:2.5991em;vertical-align:-1.2777em"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3214em"><span style="top:-2.314em"><span class="pstrut" style="height:3em"></span><span class="mord"><span class="mord mathnormal">n</span></span></span><span style="top:-3.23em"><span class="pstrut" style="height:3em"></span><span class="frac-line" style="border-bottom-width:0.04em"></span></span><span style="top:-3.677em"><span class="pstrut" style="height:3em"></span><span class="mord"><span class="mord">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.1667em"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.05em"><span style="top:-1.8723em;margin-left:0em"><span class="pstrut" style="height:3.05em"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span><span style="top:-3.05em"><span class="pstrut" style="height:3.05em"></span><span><span class="mop op-symbol large-op">∑</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.2777em"><span></span></span></span></span></span><span class="mopen">∣</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.0359em">y</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em"><span class="pstrut" style="height:2.7em"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em"></span><span class="mord"><span class="mord accent"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.6944em"><span style="top:-3em"><span class="pstrut" style="height:3em"></span><span class="mord mathnormal" style="margin-right:0.0359em">y</span></span><span style="top:-3em"><span class="pstrut" style="height:3em"></span><span class="accent-body" style="left:-0.1944em"><span class="mord">^</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.1944em"><span></span></span></span></span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em"><span style="top:-2.55em;margin-left:-0.0359em;margin-right:0.05em"><span class="pstrut" style="height:2.7em"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em"><span></span></span></span></span></span></span><span class="mclose">∣</span><span class="mord">.</span></span></span></span></span>
+<h2 id="interpretability--shap">Interpretability — SHAP</h2>
+<p>A number isn’t an insight, so we ran <strong>SHAP</strong> on the final CatBoost model to turn it into advice:</p>
+<ul>
+<li><strong>Vehicle monthly distance dominates</strong> — by a wide margin the single largest driver of predicted emissions.</li>
+<li><strong>Air-travel frequency</strong> is next: “very frequently” pushes emissions up sharply; “never” pulls them down.</li>
+<li>Consumer habits (new clothes per month, waste volume) matter at the margin, and <strong>electric vehicles land near neutral</strong> while petrol nudges emissions upward.</li>
+</ul>
+<p>That maps cleanly onto real advice — <em>drive less, fly less</em> — which was the entire point: a model a person can act on.</p>
+<h2 id="honest-limitations">Honest limitations</h2>
+<p>Writing this up truthfully matters more than inflating it:</p>
+<ul>
+<li>The 0.9920 headline comes from a <strong>single 80/20 split</strong>, not cross-validation. The one cross-validated figure in the study is <strong>R² 0.991 (5-fold)</strong>, and it belongs to a <em>separate</em> stacking regressor (RF + XGBoost + CatBoost → Ridge) that generalized well (hold-out RMSE 97.7). If I revisited this, k-fold CV on the headline model would be the first fix.</li>
+<li>CatBoost’s R² lead over LightGBM is small — which is precisely why I lead with MAE, where the win is unambiguous.</li>
+<li>Hyperparameters and the dataset citation should be pinned down for full reproducibility.</li>
+</ul>
+<h2 id="reflection">Reflection</h2>
+<p>The result I actually care about isn’t 0.9920 — it’s the <em>shape</em> of the gain: a middling pipeline became a strong one through preprocessing discipline, and SHAP made the black box say something a person could use. Rigorous benchmarking paired with interpretability is how I try to approach every modeling problem.</p></div><nav class="cs-nav" aria-label="More projects" data-astro-cid-iu2tt25f><span data-astro-cid-iu2tt25f></span><a href="/projects/warungflow" class="cs-nav-item cs-nav-next" data-astro-cid-iu2tt25f><span class="cs-nav-k" data-astro-cid-iu2tt25f>Next →</span><span class="cs-nav-t" data-astro-cid-iu2tt25f>WarungFlow — Autonomous Finance Ops for Micro-Businesses</span></a></nav></div></article></main><footer id="contact" class="footer" data-astro-cid-jo6i4kqk><div class="container-page" data-astro-cid-jo6i4kqk><div class="hairline" data-astro-cid-jo6i4kqk></div><div class="footer-inner" data-astro-cid-jo6i4kqk><div class="footer-lead" data-astro-cid-jo6i4kqk><p class="eyebrow" data-astro-cid-jo6i4kqk>Get in touch</p><h2 class="footer-title" data-astro-cid-jo6i4kqk>Open to Data Science &amp; ML internships, research, and collaborations.</h2><a href="mailto:aldofahrezy@gmail.com" class="footer-email metric-num link-line" data-astro-cid-jo6i4kqk>aldofahrezy@gmail.com</a></div><nav class="footer-links" aria-label="Social and contact" data-astro-cid-jo6i4kqk><a href="https://github.com/aldofahrezy" target="_blank" rel="noopener" class="footer-link link-line" data-astro-cid-jo6i4kqk>GitHub <span aria-hidden="true" data-astro-cid-jo6i4kqk>↗</span></a><a href="https://www.linkedin.com/in/aldofahrezy" target="_blank" rel="noopener" class="footer-link link-line" data-astro-cid-jo6i4kqk>LinkedIn <span aria-hidden="true" data-astro-cid-jo6i4kqk>↗</span></a><a href="/resume.pdf" target="_blank" rel="noopener" class="footer-link link-line" data-astro-cid-jo6i4kqk>Résumé <span aria-hidden="true" data-astro-cid-jo6i4kqk>↗</span></a></nav></div><div class="footer-bottom" data-astro-cid-jo6i4kqk><span data-astro-cid-jo6i4kqk>© 2026 Muhammad Aldo Fahrezy</span><span data-astro-cid-jo6i4kqk>Built with Astro · Depok, Indonesia</span></div></div></footer><script type="module">var e=document.querySelectorAll(`.reveal`),t=window.matchMedia(`(prefers-reduced-motion: reduce)`).matches;if(e.length&&!t&&`IntersectionObserver`in window){let t=new IntersectionObserver(e=>{for(let n of e)n.isIntersecting&&(n.target.classList.add(`is-visible`),t.unobserve(n.target))},{rootMargin:`0px 0px -8% 0px`,threshold:.12});e.forEach(e=>t.observe(e))}else e.forEach(e=>e.classList.add(`is-visible`));</script></body></html>
